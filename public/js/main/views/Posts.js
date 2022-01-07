@@ -1,5 +1,5 @@
 import postTemplate from './../../../../templates/post.hbs';
-import toArray from 'lodash/lang/toArray';
+import { toArray } from 'lodash/lang';
 import parseHTML from './../../utils/parseHTML';
 import humanReadableTimeDiff from './../../utils/humanReadableTimeDiff';
 
@@ -13,7 +13,7 @@ export default function Posts(container) {
   this._lastTimeUpdate = 0;
   this._newPostAlert = container.querySelector('.posts-alert');
   this._scrollUpdatePending = false;
-  
+
   this._timesUpdate();
 
   // update times on an interval
@@ -34,7 +34,7 @@ export default function Posts(container) {
   });
 }
 
-// update all the <time> elements, unless we've 
+// update all the <time> elements, unless we've
 // already done so within the last 10 seconds
 Posts.prototype._softTimesUpdate = function() {
   if (Date.now() - this._lastTimeUpdate < 1000 * 10) return;
@@ -71,7 +71,7 @@ Posts.prototype.addPosts = function(messages) {
   // add to the dom
   var nodes = parseHTML(htmlString);
   this._scroller.insertBefore(nodes, this._scroller.firstChild);
-  
+
   // remove really old posts to avoid too much content
   var posts = toArray(this._scroller.querySelectorAll('.post'));
 

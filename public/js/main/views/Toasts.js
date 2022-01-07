@@ -1,6 +1,6 @@
 import parseHTML from './../../utils/parseHTML';
 import toastTemplate from './../../../../templates/toast.hbs';
-import defaults from 'lodash/object/defaults';
+import { defaults } from 'lodash/object';
 import transition from 'simple-transition';
 import closest from 'closest';
 
@@ -41,7 +41,7 @@ Toast.prototype.hide = function() {
   transition(this.container, {
     opacity: 0
   }, 0.3, 'ease-out').then(this._goneResolver);
-  
+
   return this.gone;
 };
 

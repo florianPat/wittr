@@ -4,18 +4,19 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import compression from 'compression';
-import {Server as WebSocketServer} from 'ws';
+import {WebSocketServer} from 'ws';
 import http from 'http';
 import url from 'url';
 import net from 'net';
 import Throttle from 'throttle';
-import random from 'lodash/number/random';
-import indexTemplate from './templates/index';
-import postsTemplate from './templates/posts';
-import postTemplate from './templates/post';
-import remoteExecutorTemplate from './templates/remote-executor';
-import idbTestTemplate from './templates/idb-test';
-import {generateReady, generateMessage} from './generateMessage';
+import number  from 'lodash/number.js';
+const random = number.random;
+import indexTemplate from './templates/index.js';
+import postsTemplate from './templates/posts.js';
+import postTemplate from './templates/post.js';
+import remoteExecutorTemplate from './templates/remote-executor.js';
+import idbTestTemplate from './templates/idb-test.js';
+import {generateReady, generateMessage} from './generateMessage.js';
 
 const maxMessages = 30;
 
@@ -65,13 +66,13 @@ export default class Server {
       server: this._appServer,
       path: '/updates'
     });
-    
+
     const staticOptions = {
       maxAge: 0
     };
 
     this._exposedServer.on('connection', socket => this._onServerConnection(socket));
-    this._wss.on('connection', ws => this._onWsConnection(ws));
+    this._wss.on('connection', (ws, req) => this._onWsConnection(ws, req.url));
 
     this._app.use(compressor);
     this._app.use('/js', express.static('../public/js', staticOptions));
@@ -98,14 +99,14 @@ export default class Server {
       }));
     });
 
-    this._app.get('/photos/:farm-:server-:id-:secret-:type.jpg', (req, res) => {
-      const flickrUrl = `http://farm${req.params.farm}.staticflickr.com/${req.params.server}/${req.params.id}_${req.params.secret}_${imgSizeToFlickrSuffix[req.params.type]}.jpg`;
+    this._app.get('/photos/:url', (req, res) => {
+      const flickrUrl = `http://images.unsplash.com/${req.params.url}`;
       const flickrRequest = http.request(flickrUrl, flickrRes => {
         flickrRes.pipe(res);
       });
 
       flickrRequest.on('error', err => {
-        // TODO: use a real flickr image as a fallback
+        const __dirname = path.resolve();
         res.sendFile('imgs/icon.png', {
           root: __dirname + '/../public/'
         });
@@ -186,10 +187,10 @@ export default class Server {
     makeConnection();
   }
 
-  _onWsConnection(socket) {
-    const requestUrl = url.parse(socket.upgradeReq.url, true);
+  _onWsConnection(socket, requestUrlString) {
+    const requestUrl = url.parse(requestUrlString, true);
 
-    if ('no-socket' in requestUrl.query) return; 
+    if ('no-socket' in requestUrl.query) return;
 
     this._sockets.push(socket);
 

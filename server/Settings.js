@@ -2,9 +2,9 @@ import express from 'express';
 import zlib from 'zlib';
 import compression from 'compression';
 import {EventEmitter} from 'events';
-import readFormBody from './readFormBody';
-import indexTemplate from './templates/index';
-import settingsTemplate from './templates/settings';
+import readFormBody from './readFormBody.js';
+import indexTemplate from './templates/index.js';
+import settingsTemplate from './templates/settings.js';
 
 const compressor = compression({
   flush: zlib.Z_PARTIAL_FLUSH

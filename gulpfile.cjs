@@ -1,8 +1,8 @@
 var gulp = require('gulp');
 var plugins = require('gulp-load-plugins')();
-var runSequence = require('run-sequence');
+var runSequence = require('gulp4-run-sequence');
 var del = require('del');
-var assign = require('lodash/object/assign');
+var { assign } = require('lodash/object');
 var browserify = require('browserify');
 var watchify = require('watchify');
 var babelify = require('babelify');
@@ -11,11 +11,17 @@ var source = require('vinyl-source-stream');
 var buffer = require('vinyl-buffer');
 var mergeStream = require('merge-stream');
 var through = require('through2');
+const sass = require('gulp-sass')(require('sass'));
 
 var args = process.argv.slice(3);
 
 gulp.task('clean', function (done) {
-  del(['build'], done);
+  del(['build']).then(() => {
+    done();
+  }).catch(() => {
+    console.log('clean failed!');
+    done();
+  });
 });
 
 gulp.task('copy', function () {
@@ -29,9 +35,9 @@ gulp.task('copy', function () {
 
 gulp.task('css', function () {
   return gulp.src('public/scss/*.scss')
-    .pipe(plugins.sass.sync().on('error', plugins.sass.logError))
+    .pipe(sass.sync().on('error', sass.logError))
     .pipe(plugins.sourcemaps.init())
-    .pipe(plugins.sass({ outputStyle: 'compressed' }))
+    .pipe(sass({ outputStyle: 'compressed' }))
     .pipe(plugins.sourcemaps.write('./'))
     .pipe(gulp.dest('build/public/css/'));
 });
@@ -49,7 +55,7 @@ function createBundle(src) {
   var b = watchify(browserify(opts));
 
   b.transform(babelify.configure({
-    stage: 1
+    presets: ["@babel/preset-env"]
   }));
 
   b.transform(hbsfy);
@@ -96,7 +102,7 @@ gulp.task('js:browser', function () {
 gulp.task('js:server', function () {
   return gulp.src('server/**/*.js')
     .pipe(plugins.sourcemaps.init())
-    .pipe(plugins.babel({stage: 1}))
+    .pipe(plugins.babel({}))
     .on('error', plugins.util.log.bind(plugins.util))
     .pipe(plugins.sourcemaps.write('.'))
     .pipe(gulp.dest('build/server'));
@@ -108,10 +114,10 @@ gulp.task('templates:server', function () {
     .on('error', plugins.util.log.bind(plugins.util))
     .pipe(through.obj(function(file, enc, callback) {
       // Don't want the whole lib
-      file.defineModuleOptions.require = {Handlebars: 'handlebars/runtime'};
+      file.defineModuleOptions.require = {Handlebars: 'handlebars/runtime.js'};
       callback(null, file);
     }))
-    .pipe(plugins.defineModule('commonjs'))
+    .pipe(plugins.defineModule('es6'))
     .pipe(plugins.rename(function(path) {
       path.extname = '.js';
     }))
@@ -119,10 +125,10 @@ gulp.task('templates:server', function () {
 });
 
 gulp.task('watch', function () {
-  gulp.watch(['public/scss/**/*.scss'], ['css']);
-  gulp.watch(['templates/*.hbs'], ['templates:server']);
-  gulp.watch(['server/**/*.js'], ['js:server']);
-  gulp.watch(['public/imgs/**/*', 'public/avatars/**/*', 'server/*.txt', 'public/*.json'], ['copy']);
+  gulp.watch(['public/scss/**/*.scss'], gulp.series('css'));
+  gulp.watch(['templates/*.hbs'], gulp.series('templates:server'));
+  gulp.watch(['server/**/*.js'], gulp.series('js:server'));
+  gulp.watch(['public/imgs/**/*', 'public/avatars/**/*', 'server/*.txt', 'public/*.json'], gulp.series('copy'));
 
   Object.keys(jsBundles).forEach(function(key) {
     var b = jsBundles[key];

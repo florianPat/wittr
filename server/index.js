@@ -1,5 +1,5 @@
-import Server from './Server';
-import Settings from './Settings';
+import Server from './Server.js';
+import Settings from './Settings.js';
 import minimist from 'minimist';
 
 const argv = minimist(process.argv, {
